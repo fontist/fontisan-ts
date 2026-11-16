@@ -4,3 +4,11 @@ pkg/
 target/
 *.wasm
 .DS_Store
+
+# Keep generated vendor artifacts available for packaging.
+!vendor/
+!vendor/**/
+!vendor/**
+vendor/**/*.tmp
+vendor/**/*.temp
+vendor/**/~*
