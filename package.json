@@ -1,0 +1,36 @@
+{
+  "name": "fontisan-ts-placeholder",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22.23.1" },
+  "types": "./dist/index.node.d.ts",
+  "exports": {
+    ".": {
+      "node": {
+        "types": "./dist/index.node.d.ts",
+        "default": "./dist/index.node.js"
+      },
+      "browser": {
+        "types": "./dist/index.browser.d.ts",
+        "default": "./dist/index.browser.js"
+      },
+      "types": "./dist/index.browser.d.ts",
+      "default": "./dist/index.browser.js"
+    }
+  },
+  "files": ["dist/", "vendor/", "README.md", "LICENSE"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "pretest": "npm run build",
+    "test": "vitest run test/smoke.test.ts --environment node",
+    "pretest:browser": "npm run build",
+    "test:browser": "node --input-type=module -e \"import { startVitest } from 'vitest/node'; import { playwright } from '@vitest/browser-playwright'; await startVitest(['test/smoke.test.ts'], { watch: false, browser: { enabled: true, headless: true, provider: playwright(), instances: [{ browser: 'chromium' }] } });\"",
+    "prepack": "npm run build"
+  },
+  "devDependencies": {
+    "@vitest/browser-playwright": "5.1.0",
+    "typescript": "7.0.2",
+    "vitest": "5.1.0"
+  }
+}
