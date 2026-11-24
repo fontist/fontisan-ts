@@ -46,6 +46,13 @@ function cases(): Case[] {
   return out;
 }
 
+// The engine does not read these natively (ABI: "dfont / Type 1: serve the file with the Ruby engine"),
+// so the wasm face must answer UnsupportedError for them and for nothing else:
+//  - fonttools-test-dfont: golden is ok; the native engine has no dfont reader yet.
+//  - fonttools-test-t1-pfb: golden is a Ruby error; the native engine reports unsupported for Type 1.
+// A case leaving this list (the engine gaining support) or joining it fails the test below.
+const UNSUPPORTED = new Set(['fonttools-test-dfont', 'fonttools-test-t1-pfb']);
+
 const VARIANTS = ['full/lazy', 'full/eager', 'metadata/lazy', 'metadata/eager'];
 const entry = (g: any, key: string) => {
   const e = g.read[key];
@@ -62,7 +69,8 @@ function expectError(err: unknown, want: any, what: string) {
 
 test.skipIf(!present)('read matches the goldens', async () => {
   const fontisan = await load();
-  let ok = 0, unsupported = 0;
+  let ok = 0;
+  const unsupported = new Set<string>();
   for (const { id, data, g, swallow } of cases()) {
     for (const key of VARIANTS) {
       if (swallow && key !== 'full/eager') continue;
@@ -73,10 +81,15 @@ test.skipIf(!present)('read matches the goldens', async () => {
       try {
         got = fontisan.read(data, { metadata: mode === 'metadata', lazy: lazy === 'lazy' }) as any[];
       } catch (err) {
-        if (err instanceof UnsupportedError) { unsupported++; continue; }
+        if (err instanceof UnsupportedError) {
+          expect(UNSUPPORTED.has(id), `${what}: unexpected UnsupportedError`).toBe(true);
+          unsupported.add(id);
+          continue;
+        }
         expectError(err, want, what);
         continue;
       }
+      expect(UNSUPPORTED.has(id), `${what}: expected UnsupportedError`).toBe(false);
       expect(want.ok, `${what}: expected an error`).toBeDefined();
       expect(got.length, `${what}: face count`).toBe(want.ok.length);
       const deduped = typeof g.read[key].same_as === 'string';
@@ -88,12 +101,13 @@ test.skipIf(!present)('read matches the goldens', async () => {
     }
   }
   expect(ok).toBeGreaterThanOrEqual(150);
-  expect(unsupported).toBeGreaterThanOrEqual(4);
+  expect(unsupported).toEqual(UNSUPPORTED);
 });
 
 test.skipIf(!present)('audit matches the goldens', async () => {
   const fontisan = await load();
   let ok = 0;
+  const unsupported = new Set<string>();
   for (const { id, file, data, g } of cases()) {
     for (const [profile, validate] of [['default', false], ['validate', true]] as const) {
       const want = g.audit[profile];
@@ -102,16 +116,22 @@ test.skipIf(!present)('audit matches the goldens', async () => {
       try {
         got = fontisan.audit(data, file, { validate });
       } catch (err) {
-        if (err instanceof UnsupportedError) continue;
+        if (err instanceof UnsupportedError) {
+          expect(UNSUPPORTED.has(id), `${what}: unexpected UnsupportedError`).toBe(true);
+          unsupported.add(id);
+          continue;
+        }
         expectError(err, want, what);
         continue;
       }
+      expect(UNSUPPORTED.has(id), `${what}: expected UnsupportedError`).toBe(false);
       expect(want.ok, `${what}: expected an error`).toBeDefined();
       expect(got, what).toEqual(want.ok);
       ok++;
     }
   }
   expect(ok).toBeGreaterThanOrEqual(50);
+  expect(unsupported).toEqual(UNSUPPORTED);
 });
 
 test.skipIf(!present)('convert and glyphIds serve real fonts', async () => {
