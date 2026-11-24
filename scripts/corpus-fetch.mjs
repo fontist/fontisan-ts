@@ -35,7 +35,7 @@ for (const font of manifest.fonts) {
   const target = join(corpus, 'fonts', font.id, font.file);
   const sha = (b) => createHash('sha256').update(b).digest('hex');
   if (!(existsSync(target) && sha(readFileSync(target)) === font.sha256)) {
-    const res = await fetch(font.source.url.replace('[', '%5B').replace(']', '%5D'));
+    const res = await fetch(font.source.url.replaceAll('[', '%5B').replaceAll(']', '%5D'));
     if (!res.ok) throw new Error(`${font.id}: HTTP ${res.status}`);
     const data = Buffer.from(await res.arrayBuffer());
     if (sha(data) !== font.sha256) throw new Error(`${font.id}: sha256 ${sha(data)} != manifest ${font.sha256}`);
