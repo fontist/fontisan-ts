@@ -12,3 +12,4 @@ target/
 vendor/**/*.tmp
 vendor/**/*.temp
 vendor/**/~*
+.corpus/

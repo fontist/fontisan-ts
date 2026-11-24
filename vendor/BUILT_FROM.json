@@ -1,0 +1,9 @@
+{
+  "repository": "https://github.com/fontist/fontisan-rs",
+  "engine_rev": "517ccdc6f51521d40a23bbb1ff024d7d6c280ec9",
+  "target": "wasm32-unknown-unknown",
+  "package": "fontisan-ffi",
+  "rustc": "rustc 1.99.1 (58cf8f9c3 2026-10-13)",
+  "abi_version": 2,
+  "files": { "fontisan.wasm": "fe115cc4fd51c751cb7ced1b696bab7d36c1f42234ebb4103080430d6e4868cb" }
+}

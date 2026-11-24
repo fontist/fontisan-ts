@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  node:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.23.1
+      - run: npm install --package-lock=false
+      - name: Fetch the shared corpus at CORPUS_REV
+        run: node scripts/corpus-fetch.mjs
+      - name: Build and test (the vendored wasm is checksum-verified at load)
+        run: npm test
+        env:
+          FONTISAN_REQUIRE_CORPUS: '1'
+
+  # The wasm must still build at ENGINE_REV. Byte-identity across toolchains is not asserted;
+  # the node job verifies the vendored artifact by its compiled-in checksum.
+  refresh-builds:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      - run: scripts/refresh-wasm.sh
