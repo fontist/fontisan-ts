@@ -30,6 +30,29 @@ The Playwright install command downloads Chromium for the browser tests.
 The package includes `dist/`, `vendor/`, this README, and `LICENSE` when supplied;
 npm also always includes `package.json`.
 
+## Node API
+
+```ts
+import { load } from 'fontisan-ts-placeholder';
+const fontisan = await load();                       // verifies vendor/fontisan.wasm against the compiled-in sha256
+fontisan.read(bytes, { metadata: true });            // one document per face
+fontisan.audit(bytes, 'Font.ttf', { validate: true });
+fontisan.glyphIds(bytes, 'Font.ttf', [0x41]);
+fontisan.convert(bytes, 'woff2', 1_700_000_000n);    // woff2 needs an explicit timestamp: wasm has no clock
+```
+
+`scan()` and `auditDir()` need a file system and throw `UnsupportedError`. A
+tampered or stale artifact throws `IntegrityError`. A panic cannot unwind on
+wasm32, so it traps: `EngineTrapError` is thrown and the next call starts a
+fresh instance.
+
+## Engine artifact
+
+`vendor/fontisan.wasm` is build output of `fontisan-ffi` at the rev in
+`ENGINE_REV` (fontisan-rs is consumed read-only). `npm run refresh-wasm`
+rebuilds it and rewrites `vendor/BUILT_FROM.json` and `src/integrity.ts`.
+`CORPUS_REV` pins the goldens for the parity test (`npm run corpus-fetch`).
+
 ## Package status
 
 The eventual npm package name is for the package owner to choose. This
